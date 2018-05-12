@@ -56,31 +56,9 @@ CANDIDATE is the selected item in the helm menu."
                         (lsp-send-request (lsp-make-request "workspace/symbol"
                                                             (list :query helm-pattern))))))
        :action 'helm-lsp-workspace-symbol-action
-
        :volatile t
        :keymap helm-map)
      :input (thing-at-point 'symbol))))
-
-(defun helm-lsp-workspace-references ()
-  "Preconfigured `helm' for lsp workspace/symbol."
-  (interactive)
-  (lsp--cur-workspace-check)
-  (let ((workspace lsp--cur-workspace))
-    (helm
-     :sources
-     (helm-build-sync-source "*workspace-symbol*"
-       :candidates (lambda ()
-                     (let ((lsp--cur-workspace workspace))
-                       (mapcar
-                        (lambda (symbol)
-                          (cons (format "%s.%s"
-                                        (gethash "containerName" symbol)
-                                        (gethash "name" symbol))
-                                symbol))
-                        (lsp-send-request (lsp-make-request "workspace/symbol"
-                                                            (list :query helm-pattern))))))
-       :action 'helm-lsp-workspace-symbol-action
-       :keymap helm-map))))
 
 (provide 'helm-lsp)
 ;;; helm-lsp.el ends here
