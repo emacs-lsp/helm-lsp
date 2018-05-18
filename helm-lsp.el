@@ -37,9 +37,11 @@ CANDIDATE is the selected item in the helm menu."
     (forward-line (1+ (gethash "line" start)))
     (forward-char (gethash "character" start))))
 
-(defun helm-lsp-workspace-symbol ()
-  "Preconfigured `helm' for lsp workspace/symbol."
-  (interactive)
+(defun helm-lsp-workspace-symbol (arg)
+  "Preconfigured `helm' for lsp workspace/symbol.
+
+When called with prefix ARG the default selection will be symbol at point."
+  (interactive "P")
   (lsp--cur-workspace-check)
   (let ((workspace lsp--cur-workspace))
     (helm
