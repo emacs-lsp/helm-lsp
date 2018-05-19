@@ -27,6 +27,10 @@
 (require 'helm)
 (require 'lsp-methods)
 
+(defvar lsp-helm-request-id nil)
+(defvar helm-lsp-result-p nil)
+(defvar helm-lsp-result nil)
+
 (defun helm-lsp-workspace-symbol-action (candidate)
   "Action for helm workspace symbol.
 CANDIDATE is the selected item in the helm menu."
@@ -34,7 +38,7 @@ CANDIDATE is the selected item in the helm menu."
          (start (gethash "start" (gethash "range" location))))
     (find-file (lsp--uri-to-path (gethash "uri" location)))
     (goto-char (point-min))
-    (forward-line (1+ (gethash "line" start)))
+    (forward-line (gethash "line" start))
     (forward-char (gethash "character" start))))
 
 (defun helm-lsp-workspace-symbol (arg)
@@ -43,23 +47,45 @@ CANDIDATE is the selected item in the helm menu."
 When called with prefix ARG the default selection will be symbol at point."
   (interactive "P")
   (lsp--cur-workspace-check)
+
   (let ((workspace lsp--cur-workspace))
     (helm
-     :sources
-     (helm-build-sync-source "*workspace-symbol*"
-       :candidates (lambda ()
-                     (let ((lsp--cur-workspace workspace))
-                       (mapcar
-                        (lambda (symbol)
-                          (cons (format "%s.%s"
-                                        (gethash "containerName" symbol)
-                                        (gethash "name" symbol))
-                                symbol))
-                        (lsp-send-request (lsp-make-request "workspace/symbol"
-                                                            (list :query helm-pattern))))))
-       :action 'helm-lsp-workspace-symbol-action
-       :volatile t
-       :keymap helm-map)
+     :sources (helm-build-sync-source "Workspace symbol"
+                :candidates (lambda ()
+                              (if helm-lsp-result-p
+                                  helm-lsp-result
+                                (let* ((lsp--cur-workspace workspace)
+                                       (request (lsp-make-request "workspace/symbol"
+                                                                  (list :query helm-pattern)))
+                                       (request-id        (plist-get request :id)))
+
+                                  ;; cancel if there is pending request
+                                  (when lsp-helm-request-id
+                                    (lsp--cancel-request lsp-helm-request-id)
+                                    (setq lsp-helm-request-id nil))
+
+                                  (setq lsp-helm-request-id request-id)
+                                  (lsp-send-request-async
+                                   request
+                                   (lambda (candidates)
+                                     (setq lsp-helm-request-id nil)
+                                     (and helm-alive-p
+                                          (let ((helm-lsp-result candidates)
+                                                (helm-lsp-result-p t))
+                                            (helm-update)))))
+                                  nil)))
+                :action 'helm-lsp-workspace-symbol-action
+                :volatile t
+                :keymap helm-map
+                :candidate-transformer (lambda (candidates)
+                                         (cl-loop for c in candidates
+                                                  collect (cons (format "%s.%s"
+                                                                        (gethash "containerName" c)
+                                                                        (gethash "name" c))
+                                                                c)))
+                :candidate-number-limit nil
+                :requires-pattern 1)
+
      :input (when arg (thing-at-point 'symbol)))))
 
 (provide 'helm-lsp)
