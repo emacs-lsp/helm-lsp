@@ -60,7 +60,7 @@ When called with prefix ARG the default selection will be symbol at point."
        :action 'helm-lsp-workspace-symbol-action
        :volatile t
        :keymap helm-map)
-     :input (thing-at-point 'symbol))))
+     :input (when arg (thing-at-point 'symbol)))))
 
 (provide 'helm-lsp)
 ;;; helm-lsp.el ends here
