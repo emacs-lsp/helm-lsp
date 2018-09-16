@@ -1,0 +1,6 @@
+#+TITLE: Helm lsp integration
+
+This package provides alternative of the build-in ~lsp-mode~ operations.
+
+* Commands
+  - `helm-lsp-workspace-symbol`
