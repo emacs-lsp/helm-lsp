@@ -45,7 +45,6 @@ CANDIDATE is the selected item in the helm menu."
     (forward-line line)
     (forward-char character)))
 
-
 (defun help-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
   (if workspaces
@@ -94,6 +93,7 @@ CANDIDATE is the selected item in the helm menu."
        :input input)
     (user-error "No LSP workspace active")))
 
+;;;###autoload
 (defun helm-lsp-workspace-symbol (arg)
   "`helm' for lsp workspace/symbol.
 When called with prefix ARG the default selection will be symbol at point."
@@ -102,6 +102,7 @@ When called with prefix ARG the default selection will be symbol at point."
                               "Workspace symbol"
                               (when arg (thing-at-point 'symbol))))
 
+;;;###autoload
 (defun helm-lsp-global-workspace-symbol (arg)
   "`helm' for lsp workspace/symbol for all of the current workspaces.
 When called with prefix ARG the default selection will be symbol at point."
