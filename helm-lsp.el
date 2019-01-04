@@ -28,6 +28,7 @@
 ;;; Code:
 
 (require 'helm)
+(require 'helm-imenu)
 (require 'dash)
 (require 'lsp-mode)
 
@@ -38,18 +39,12 @@
 (defun helm-lsp-workspace-symbol-action (candidate)
   "Action for helm workspace symbol.
 CANDIDATE is the selected item in the helm menu."
-  (-let* (((&hash "uri" "range" (&hash "line" "character")) (gethash "location" candidate)))
+  (-let* (((&hash "uri" "range" (&hash "start" (&hash "line" "character"))) (gethash "location" candidate)))
     (find-file (lsp--uri-to-path uri))
     (goto-char (point-min))
     (forward-line line)
     (forward-char character)))
 
-
-(defmacro with-lsp-workspaces (workspaces &rest body)
-  "Helper macro for invoking BODY against WORKSPACES."
-  (declare (debug (form body))
-           (indent 1))
-  `(let ((lsp--buffer-workspaces ,workspaces)) ,@body))
 
 (defun help-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
@@ -83,13 +78,19 @@ CANDIDATE is the selected item in the helm menu."
                   :volatile t
                   :keymap helm-map
                   :candidate-transformer (lambda (candidates)
-                                           (cl-loop for c in candidates
-                                                    collect (cons (format "%s.%s"
-                                                                          (gethash "containerName" c)
-                                                                          (gethash "name" c))
-                                                                  c)))
+                                           (-map
+                                            (-lambda ((candidate &as &hash "containerName" container-name "name" "kind"))
+                                              (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
+                                                (cons
+                                                 (concat (if (s-blank? container-name)
+                                                             name
+                                                           (concat container-name "." name))
+                                                         " "
+                                                         (propertize (concat "(" type ")") 'face 'font-lock-keyword-face))
+                                                 candidate)))
+                                            candidates))
                   :candidate-number-limit nil
-                  :requires-pattern 1)
+                  :requires-pattern 0)
        :input input)
     (user-error "No LSP workspace active")))
 

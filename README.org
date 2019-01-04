@@ -1,6 +1,12 @@
 #+TITLE: Helm lsp integration
 
-This package provides alternative of the build-in ~lsp-mode~ operations.
+This package provides alternative of the build-in ~lsp-mode~ ~xref-appropos~
+which provides as you type completion.
+
+* Screenshot
+#+caption: Demo
+[[file:demo.png]]
 
 * Commands
-  - `helm-lsp-workspace-symbol`
+  - ~helm-lsp-workspace-symbol~ - workspace symbols for the current workspace
+  - ~helm-lsp-global-workspace-symbol~ - workspace symbols from all of the active workspaces.
