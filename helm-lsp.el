@@ -45,7 +45,7 @@ CANDIDATE is the selected item in the helm menu."
     (forward-line line)
     (forward-char character)))
 
-(defun help-lsp--workspace-symbol (workspaces name input)
+(defun helm-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
   (if workspaces
       (helm
@@ -75,6 +75,8 @@ CANDIDATE is the selected item in the helm menu."
                                       nil))))
                   :action 'helm-lsp-workspace-symbol-action
                   :volatile t
+                  :fuzzy-match t
+                  :match (-const t)
                   :keymap helm-map
                   :candidate-transformer (lambda (candidates)
                                            (-map
@@ -98,7 +100,7 @@ CANDIDATE is the selected item in the helm menu."
   "`helm' for lsp workspace/symbol.
 When called with prefix ARG the default selection will be symbol at point."
   (interactive "P")
-  (help-lsp--workspace-symbol (lsp-workspaces)
+  (helm-lsp--workspace-symbol (lsp-workspaces)
                               "Workspace symbol"
                               (when arg (thing-at-point 'symbol))))
 
@@ -107,7 +109,7 @@ When called with prefix ARG the default selection will be symbol at point."
   "`helm' for lsp workspace/symbol for all of the current workspaces.
 When called with prefix ARG the default selection will be symbol at point."
   (interactive "P")
-  (help-lsp--workspace-symbol (-uniq (-flatten (ht-values (lsp-session-folder->servers (lsp-session)))))
+  (helm-lsp--workspace-symbol (-uniq (-flatten (ht-values (lsp-session-folder->servers (lsp-session)))))
                               "Global workspace symbols"
                               (when arg (thing-at-point 'symbol))))
 
