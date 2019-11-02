@@ -45,6 +45,11 @@ CANDIDATE is the selected item in the helm menu."
     (forward-line line)
     (forward-char character)))
 
+(defface helm-lsp-container-face
+  '((t :height 0.8 :inherit shadow))
+  "The face used for code lens overlays."
+  :group 'lsp-mode)
+
 (defun helm-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
   (if workspaces
@@ -85,9 +90,9 @@ CANDIDATE is the selected item in the helm menu."
                                                 (cons
                                                  (concat (if (s-blank? container-name)
                                                              name
-                                                           (concat container-name "." name))
+                                                           (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " --" ))
                                                          " "
-                                                         (propertize (concat "(" type ")") 'face 'font-lock-keyword-face))
+                                                         (propertize (concat "(" type ")") 'face 'font-lock-type-face))
                                                  candidate)))
                                             candidates))
                   :candidate-number-limit nil
