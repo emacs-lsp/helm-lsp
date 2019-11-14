@@ -50,8 +50,16 @@ CANDIDATE is the selected item in the helm menu."
   "The face used for code lens overlays."
   :group 'lsp-mode)
 
+(defun helm-lsp--extract-file-name (uri)
+  (propertize
+   (if (string= "jdt" (-> uri url-unhex-string url-generic-parse-url url-type))
+       (cl-second (s-match ".*\(\\(.*\\)" uri))
+     (f-filename uri))
+   'face 'helm-lsp-container-face))
+
 (defun helm-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
+  (setq helm-lsp-symbols-result nil)
   (if workspaces
       (helm
        :sources (helm-build-sync-source name
@@ -73,28 +81,31 @@ CANDIDATE is the selected item in the helm menu."
                                        (lambda (candidates)
                                          (setq helm-lsp-symbols-request-id nil)
                                          (and helm-alive-p
-                                              (let ((helm-lsp-symbols-result candidates)
-                                                    (helm-lsp-symbols-result-p t))
+                                              (let ((helm-lsp-symbols-result-p t))
+                                                (setq helm-lsp-symbols-result candidates)
                                                 (helm-update))))
                                        'detached)
-                                      nil))))
+                                      helm-lsp-symbols-result))))
                   :action 'helm-lsp-workspace-symbol-action
                   :volatile t
                   :fuzzy-match t
                   :match (-const t)
                   :keymap helm-map
-                  :candidate-transformer (lambda (candidates)
-                                           (-map
-                                            (-lambda ((candidate &as &hash "containerName" container-name "name" "kind"))
-                                              (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
-                                                (cons
-                                                 (concat (if (s-blank? container-name)
-                                                             name
-                                                           (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " --" ))
-                                                         " "
-                                                         (propertize (concat "(" type ")") 'face 'font-lock-type-face))
-                                                 candidate)))
-                                            candidates))
+                  :candidate-transformer
+                  (lambda (candidates)
+                    (-map
+                     (-lambda ((candidate &as
+                                          &hash "containerName" container-name
+                                          "name" "kind"))
+                       (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
+                         (cons
+                          (concat (if (s-blank? container-name)
+                                      name
+                                    (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " -" ))
+                                  " "
+                                  (propertize (concat "(" type ")") 'face 'font-lock-type-face))
+                          candidate)))
+                     candidates))
                   :candidate-number-limit nil
                   :requires-pattern 0)
        :input input)
