@@ -10,3 +10,4 @@ which provides as you type completion.
 * Commands
   - ~helm-lsp-workspace-symbol~ - workspace symbols for the current workspace
   - ~helm-lsp-global-workspace-symbol~ - workspace symbols from all of the active workspaces.
+  - ~helm-lsp-code-actions~ - helm interface to lsp-execute-code-action.
