@@ -11,3 +11,8 @@ which provides as you type completion.
   - ~helm-lsp-workspace-symbol~ - workspace symbols for the current workspace
   - ~helm-lsp-global-workspace-symbol~ - workspace symbols from all of the active workspaces.
   - ~helm-lsp-code-actions~ - helm interface to lsp-execute-code-action.
+* Configuration
+  Use the following lines to replace ~xref-find-apropos~ in ~lsp-mode~ controlled buffer.s
+  #+BEGIN_SRC emacs-lisp
+    (define-key lsp-mode-map [remap xref-find-apropos] #'helm-lsp-workspace-symbol)
+#+END_SRC
