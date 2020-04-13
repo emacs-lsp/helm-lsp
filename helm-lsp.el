@@ -36,6 +36,11 @@
 (defvar helm-lsp-symbols-result-p nil)
 (defvar helm-lsp-symbols-result nil)
 
+(defgroup helm-lsp nil
+  "`helm-lsp' group."
+  :group 'lsp-mode
+  :tag "Language Server")
+
 (defun helm-lsp-workspace-symbol-action (candidate)
   "Action for helm workspace symbol.
 CANDIDATE is the selected item in the helm menu."
@@ -48,7 +53,12 @@ CANDIDATE is the selected item in the helm menu."
 (defface helm-lsp-container-face
   '((t :height 0.8 :inherit shadow))
   "The face used for code lens overlays."
-  :group 'lsp-mode)
+  :group 'helm-lsp)
+
+(defcustom helm-lsp-treemacs-icons t
+  "If non-nil, use `lsp-treemacs' icons."
+  :group 'helm-lsp
+  :type 'boolean)
 
 (defun helm-lsp--extract-file-name (uri)
   (propertize
@@ -97,13 +107,26 @@ CANDIDATE is the selected item in the helm menu."
                      (-lambda ((candidate &as
                                           &hash "containerName" container-name
                                           "name" "kind"))
+
+
                        (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
                          (cons
-                          (concat (if (s-blank? container-name)
-                                      name
-                                    (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " -" ))
-                                  " "
-                                  (propertize (concat "(" type ")") 'face 'font-lock-type-face))
+                          (if (and (featurep 'lsp-treemacs)
+                                   helm-lsp-treemacs-icons)
+                              (concat
+                               (or (treemacs-get-icon-value (lsp-treemacs-symbol-kind->icon kind) nil lsp-treemacs-theme)
+                                   (treemacs-get-icon-value 'fallback nil lsp-treemacs-theme))
+                               (if (s-blank? container-name)
+                                   name
+                                 (concat name " " (propertize container-name 'face 'helm-lsp-container-face))))
+
+                            (cons
+                             (concat (if (s-blank? container-name)
+                                         name
+                                       (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " -" ))
+                                     " "
+                                     (propertize (concat "(" type ")") 'face 'font-lock-type-face))
+                             candidate))
                           candidate)))
                      candidates))
                   :candidate-number-limit nil
