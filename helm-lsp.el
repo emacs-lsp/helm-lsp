@@ -67,6 +67,11 @@ CANDIDATE is the selected item in the helm menu."
      (f-filename uri))
    'face 'helm-lsp-container-face))
 
+(defun helm-lsp--get-icon (kind)
+  (require 'lsp-treemacs)
+  (ht-get (treemacs-theme->gui-icons (treemacs--find-theme lsp-treemacs-theme))
+          (lsp-treemacs-symbol-kind->icon kind)))
+
 (defun helm-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
   (setq helm-lsp-symbols-result nil)
@@ -112,8 +117,8 @@ CANDIDATE is the selected item in the helm menu."
                           (if (and (featurep 'lsp-treemacs)
                                    helm-lsp-treemacs-icons)
                               (concat
-                               (or (treemacs-get-icon-value (lsp-treemacs-symbol-kind->icon kind) nil lsp-treemacs-theme)
-                                   (treemacs-get-icon-value 'fallback nil lsp-treemacs-theme))
+                               (or (helm-lsp--get-icon kind)
+                                   (helm-lsp--get-icon 'fallback))
                                (if (s-blank? container-name)
                                    name
                                  (concat name " " (propertize container-name 'face 'helm-lsp-container-face))))
