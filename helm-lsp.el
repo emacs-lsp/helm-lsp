@@ -107,8 +107,6 @@ CANDIDATE is the selected item in the helm menu."
                      (-lambda ((candidate &as
                                           &hash "containerName" container-name
                                           "name" "kind"))
-
-
                        (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
                          (cons
                           (if (and (featurep 'lsp-treemacs)
@@ -120,13 +118,11 @@ CANDIDATE is the selected item in the helm menu."
                                    name
                                  (concat name " " (propertize container-name 'face 'helm-lsp-container-face))))
 
-                            (cons
-                             (concat (if (s-blank? container-name)
-                                         name
-                                       (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " -" ))
-                                     " "
-                                     (propertize (concat "(" type ")") 'face 'font-lock-type-face))
-                             candidate))
+                            (concat (if (s-blank? container-name)
+                                        name
+                                      (concat name " " (propertize container-name 'face 'helm-lsp-container-face) " -" ))
+                                    " "
+                                    (propertize (concat "(" type ")") 'face 'font-lock-type-face)))
                           candidate)))
                      candidates))
                   :candidate-number-limit nil
