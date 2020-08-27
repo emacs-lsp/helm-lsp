@@ -179,6 +179,166 @@ When called with prefix ARG the default selection will be symbol at point."
                    candidates))
                 :action '(("Execute code action" . (lambda(candidate)
                                                      (lsp-execute-code-action (plist-get candidate :data)))))))))))
+(-let (((&Position :line :character) (lsp-make-position :character 10 :line 10)))
+  character)
 
-(provide 'helm-lsp)
-;;; helm-lsp.el ends here
+
+(defun helm-lsp-get-symbol-data (symbols path)
+  (-mapcat (lambda (symbol)
+             (cons (concat (lsp:document-symbol-name symbol) "|" path)
+                   (helm-lsp-get-symbol-data (lsp:document-symbol-children? symbol)
+                                             (concat path "." (lsp:document-symbol-name symbol))) ))
+           symbols))
+
+(defun helm-lsp-get-symbol-data-1 (symbols parents)
+  (-mapcat (lambda (symbol)
+             (cons (lsp-put symbol :_parents parents)
+                   (helm-lsp-get-symbol-data-1 (lsp:document-symbol-children? symbol)
+                                               (cl-list* symbol parents))))
+           symbols))
+
+;; (with-current-buffer "App.java"
+;;   (helm-lsp-get-symbol-data-1 (lsp-request "textDocument/documentSymbol"
+;;                                            `(:textDocument ,(lsp--text-document-identifier)))
+;;                               nil)
+;;   )
+;; (spacemacs/set-leader-keys
+;;   "aj" #'helm-lsp-symbols)
+;; (with-current-buffer "App.java"
+;;   (-some-> (helm :sources (helm-build-sync-source "test"
+;;                             :candidate-transformer (lambda (candidates)
+;;                                                      (-map (lambda (symbol)
+;;                                                              (cons (concat
+;;                                                                     (lsp-treemacs-get-icon (lsp-treemacs-symbol-kind->icon (lsp:document-symbol-kind symbol)))
+;;                                                                     (s-pad-right  60 " " (lsp:document-symbol-name symbol))
+;;                                                                     (propertize (mapconcat #'lsp:document-symbol-name
+;;                                                                                            (lsp-get symbol :_parents) " · ")
+;;                                                                                 'face 'font-lock-keyword-face)) symbol))
+;;                                                            candidates))
+;;                             :candidates (helm-lsp-get-symbol-data-1 (lsp-request "textDocument/documentSymbol"
+;;                                                                                  `(:textDocument ,(lsp--text-document-identifier)))
+;;                                                                     nil)
+
+;;                             :action '(("Go to" . (lambda (candidate)
+;;                                                    (-> candidate
+;;                                                        lsp:document-symbol-selection-range
+;;                                                        lsp:range-start
+;;                                                        lsp--position-to-point
+;;                                                        goto-char
+;;                                                        )))
+;;                                       ("Show references" . (lambda (candidate)
+;;                                                              (save-excursion
+;;                                                                (-> candidate
+;;                                                                    lsp:document-symbol-selection-range
+;;                                                                    lsp:range-start
+;;                                                                    lsp--position-to-point
+;;                                                                    goto-char)
+;;                                                                (lsp-find-references))))
+;;                                       ("Delete" . (lambda (_candidate)
+;;                                                     (let ((marked (helm-marked-candidates) ))
+;;                                                       (->> marked
+;;                                                            (-filter (-lambda (symbol)
+;;                                                                       (-none? (lambda (parent)
+;;                                                                                 (-contains? symbols parent))
+;;                                                                               (lsp-get symbol :_parents))))
+;;                                                            (sort (lambda (left right)
+;;                                                                    (> (-> left lsp:document-symbol-range lsp:range-start lsp--position-to-point)
+;;                                                                       (-> right lsp:document-symbol-range lsp:range-start lsp--position-to-point))))
+;;                                                            (mapc (lambda (symbol)
+;;                                                                    (delete-region
+;;                                                                     (-> symbol lsp:document-symbol-range lsp:range-start lsp--position-to-point)
+;;                                                                     (-> symbol lsp:document-symbol-range lsp:range-end lsp--position-to-point)))))
+;;                                                       (when (buffer-live-p helm-buffer)
+;;                                                         (with-helm-buffer
+;;                                                           (setq helm-marked-candidates nil
+;;                                                                 helm-visible-mark-overlays nil))
+;;                                                         (message "Deleted %s symbols(s)" (length marked))))))))
+;;                  :buffer "*helm test*")
+;;     lsp:document-symbol-selection-range
+;;     lsp:range-start
+;;     lsp--position-to-point
+;;     goto-char))
+
+
+;; (setq symbols my/symbols)
+;; (length symbols)
+
+
+
+
+;; (defun helm-lsp-symbols ()
+;;   (interactive)
+;;   (-some->
+;;       (helm
+;;        :sources
+;;        (helm-build-sync-source "test"
+;;          :candidate-transformer (lambda (candidates)
+;;                                   (-map (lambda (symbol)
+;;                                           (cons (concat
+;;                                                  (lsp-treemacs-get-icon (lsp-treemacs-symbol-kind->icon (lsp:document-symbol-kind symbol)))
+;;                                                  (s-pad-right  60 " " (lsp:document-symbol-name symbol))
+;;                                                  (propertize (mapconcat #'lsp:document-symbol-name
+;;                                                                         (lsp-get symbol :_parents) " · ")
+;;                                                              'face 'font-lock-keyword-face)) symbol))
+;;                                         candidates))
+;;          :candidates (helm-lsp-get-symbol-data-1 (lsp-request "textDocument/documentSymbol"
+;;                                                               `(:textDocument ,(lsp--text-document-identifier)))
+;;                                                  nil)
+
+;;          :action '(("Go to" . (lambda (candidate)
+;;                                 (-> candidate
+;;                                     lsp:document-symbol-selection-range
+;;                                     lsp:range-start
+;;                                     lsp--position-to-point
+;;                                     goto-char)))
+;;                    ("Show references" . (lambda (candidate)
+;;                                           (save-excursion
+;;                                             (-> candidate
+;;                                                 lsp:document-symbol-selection-range
+;;                                                 lsp:range-start
+;;                                                 lsp--position-to-point
+;;                                                 goto-char)
+;;                                             (lsp-find-references))))
+;;                    ("Show references" . (lambda (candidate)
+;;                                           (save-excursion
+;;                                             (-> candidate
+;;                                                 lsp:document-symbol-selection-range
+;;                                                 lsp:range-start
+;;                                                 lsp--position-to-point
+;;                                                 goto-char)
+;;                                             (lsp-find-references))))
+;;                    ("Rename" . (lambda (candidate)
+;;                                  (save-excursion
+;;                                    (-> candidate
+;;                                        lsp:document-symbol-selection-range
+;;                                        lsp:range-start
+;;                                        lsp--position-to-point
+;;                                        goto-char)
+;;                                    (call-interactively #'lsp-rename))))
+;;                    ("Delete" . (lambda (_candidate)
+;;                                  (let ((marked (helm-marked-candidates) ))
+;;                                    (mapc (lambda (symbol)
+;;                                            (delete-region
+;;                                             (-> symbol lsp:document-symbol-range lsp:range-start lsp--position-to-point)
+;;                                             (-> symbol lsp:document-symbol-range lsp:range-end lsp--position-to-point)))
+;;                                          (-sort (lambda (left right)
+;;                                                   (> (-> left lsp:document-symbol-range lsp:range-start lsp--position-to-point)
+;;                                                      (-> right lsp:document-symbol-range lsp:range-start lsp--position-to-point)))
+;;                                                 (-filter (-lambda (symbol)
+;;                                                            (-none? (lambda (parent)
+;;                                                                      (-contains? symbols parent))
+;;                                                                    (lsp-get symbol :_parents)))
+;;                                                          marked)))
+;;                                    (when (buffer-live-p helm-buffer)
+;;                                      (with-helm-buffer
+;;                                        (setq helm-marked-candidates nil
+;;                                              helm-visible-mark-overlays nil))
+;;                                      (message "Deleted %s symbols(s)" (length marked))))))))
+;;        :buffer "*helm test*")
+;;     lsp:document-symbol-selection-range
+;;     lsp:range-start
+;;     lsp--position-to-point
+;;     goto-char))
+
+;; (provide 'helm-lsp)
+;; ;;; helm-lsp.el ends here
