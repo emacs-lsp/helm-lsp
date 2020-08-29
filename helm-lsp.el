@@ -179,6 +179,25 @@ When called with prefix ARG the default selection will be symbol at point."
                    candidates))
                 :action '(("Execute code action" . (lambda(candidate)
                                                      (lsp-execute-code-action (plist-get candidate :data)))))))))))
+
+;; helm projects
 
+(with-eval-after-load 'helm-projectile
+  (defvar helm-lsp-source-projects
+    (helm-build-sync-source "LSP projects"
+      :candidates (lambda ()
+                    (lsp-session-folders (lsp-session)))
+      :fuzzy-match helm-projectile-fuzzy-match
+      :keymap helm-projectile-projects-map
+      :mode-line helm-read-file-name-mode-line-string
+      :action 'helm-source-projectile-projects-actions)
+    "Helm source for known LSP projects.")
+
+  (helm-projectile-command "switch-lsp-project"
+                           'helm-lsp-source-projects
+                           "Switch to LSP project: "
+                           t))
+
+
 (provide 'helm-lsp)
 ;;; helm-lsp.el ends here
