@@ -193,10 +193,16 @@ When called with prefix ARG the default selection will be symbol at point."
       :action 'helm-source-projectile-projects-actions)
     "Helm source for known LSP projects.")
 
-  (helm-projectile-command "switch-lsp-project"
-                           'helm-lsp-source-projects
-                           "Switch to LSP project: "
-                           t))
+  (defun helm-lsp-switch-project (&optional arg)
+    "Use projectile with Helm for finding files in project
+With a prefix ARG invalidates the cache first."
+    (interactive "P")
+    (let ((helm-ff-transformer-show-only-basename nil)
+          (helm-boring-file-regexp-list nil))
+      (helm :sources 'helm-lsp-source-projects
+            :buffer (concat "*helm projectile: " (projectile-project-name) "*")
+            :truncate-lines helm-projectile-truncate-lines
+            :prompt (projectile-prepend-project-name "Switch to LSP project: ")))))
 
 
 (provide 'helm-lsp)
