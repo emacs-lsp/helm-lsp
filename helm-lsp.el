@@ -59,6 +59,7 @@ CANDIDATE is the selected item in the helm menu."
   :type 'boolean)
 
 (defun helm-lsp--extract-file-name (uri)
+  "Extract file name from URI."
   (propertize
    (if (string= "jdt" (-> uri url-unhex-string url-generic-parse-url url-type))
        (cl-second (s-match ".*\(\\(.*\\)" uri))
@@ -66,16 +67,10 @@ CANDIDATE is the selected item in the helm menu."
    'face 'helm-lsp-container-face))
 
 (defun helm-lsp--get-icon (kind)
+  "Get the icon by KIND."
   (require 'lsp-treemacs)
   (ht-get (treemacs-theme->gui-icons (treemacs--find-theme lsp-treemacs-theme))
           (lsp-treemacs-symbol-kind->icon kind)))
-
-(defun helm-lsp--extract-file-name (uri)
-  (propertize
-   (if (string= "jdt" (-> uri url-unhex-string url-generic-parse-url url-type))
-       (cl-second (s-match ".*\(\\(.*\\)" uri))
-     (f-filename uri))
-   'face 'helm-lsp-container-face))
 
 (defun helm-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
