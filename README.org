@@ -1,3 +1,6 @@
+[[https://melpa.org/#/helm-lsp][file:https://melpa.org/packages/helm-lsp-badge.svg]]
+[[https://stable.melpa.org/#/helm-lsp][file:https://stable.melpa.org/packages/helm-lsp-badge.svg]]
+
 #+TITLE: Helm lsp integration
 
 This package provides alternative of the build-in ~lsp-mode~ ~xref-appropos~
