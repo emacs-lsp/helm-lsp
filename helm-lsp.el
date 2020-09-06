@@ -59,6 +59,7 @@ CANDIDATE is the selected item in the helm menu."
   :type 'boolean)
 
 (defun helm-lsp--extract-file-name (uri)
+  "Extract file name from URI."
   (propertize
    (if (string= "jdt" (-> uri url-unhex-string url-generic-parse-url url-type))
        (cl-second (s-match ".*\(\\(.*\\)" uri))
@@ -66,16 +67,10 @@ CANDIDATE is the selected item in the helm menu."
    'face 'helm-lsp-container-face))
 
 (defun helm-lsp--get-icon (kind)
+  "Get the icon by KIND."
   (require 'lsp-treemacs)
   (ht-get (treemacs-theme->gui-icons (treemacs--find-theme lsp-treemacs-theme))
           (lsp-treemacs-symbol-kind->icon kind)))
-
-(defun helm-lsp--extract-file-name (uri)
-  (propertize
-   (if (string= "jdt" (-> uri url-unhex-string url-generic-parse-url url-type))
-       (cl-second (s-match ".*\(\\(.*\\)" uri))
-     (f-filename uri))
-   'face 'helm-lsp-container-face))
 
 (defun helm-lsp--workspace-symbol (workspaces name input)
   "Search against WORKSPACES NAME with default INPUT."
@@ -83,58 +78,60 @@ CANDIDATE is the selected item in the helm menu."
   (if workspaces
       (with-lsp-workspaces workspaces
         (helm
-         :sources (helm-build-sync-source name
-                    :candidates (lambda ()
-                                  (if helm-lsp-symbols-result-p
-                                      helm-lsp-symbols-result
-                                    (with-lsp-workspaces workspaces
-                                      (-let (((request &as &plist :id request-id) ))
-                                        (setq helm-lsp-symbols-request-id request-id)
-                                        (lsp-request-async
-                                         "workspace/symbol"
-                                         (list :query helm-pattern)
-                                         (lambda (candidates)
-                                           (setq helm-lsp-symbols-request-id nil)
-                                           (and helm-alive-p
-                                                (let ((helm-lsp-symbols-result-p t))
-                                                  (setq helm-lsp-symbols-result candidates)
-                                                  (helm-update))))
-                                         :mode 'detached
-                                         :cancel-token :workspace-symbols)
-                                        helm-lsp-symbols-result))))
-                    :action 'helm-lsp-workspace-symbol-action
-                    :volatile t
-                    :fuzzy-match t
-                    :match (-const t)
-                    :keymap helm-map
-                    :candidate-transformer
-                    (lambda (candidates)
-                      (-map
-                       (-lambda ((candidate &as
-                                            &SymbolInformation :container-name? :name :kind :location (&Location :uri)))
-                         (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
-                           (cons
-                            (if (and (featurep 'lsp-treemacs)
-                                     helm-lsp-treemacs-icons)
-                                (concat
-                                 (or (helm-lsp--get-icon kind)
-                                     (helm-lsp--get-icon 'fallback))
-                                 (if (s-blank? container-name?)
-                                     name
-                                   (concat name " " (propertize container-name? 'face 'helm-lsp-container-face)))
-                                 (propertize " · " 'face 'success)
-                                 (helm-lsp--extract-file-name uri))
-                              (concat (if (s-blank? container-name?)
-                                          name
-                                        (concat name " " (propertize container-name? 'face 'helm-lsp-container-face) " -" ))
-                                      " "
-                                      (propertize (concat "(" type ")") 'face 'font-lock-type-face)
-                                      (propertize " · " 'face 'success)
-                                      (helm-lsp--extract-file-name uri)))
-                            candidate)))
-                       (-take helm-candidate-number-limit candidates)))
-                    :candidate-number-limit nil
-                    :requires-pattern 0)
+         :sources
+         (helm-build-sync-source
+          name
+          :candidates (lambda ()
+                        (if helm-lsp-symbols-result-p
+                            helm-lsp-symbols-result
+                          (with-lsp-workspaces workspaces
+                            (-let (((request &as &plist :id request-id) ))
+                              (setq helm-lsp-symbols-request-id request-id)
+                              (lsp-request-async
+                               "workspace/symbol"
+                               (list :query helm-pattern)
+                               (lambda (candidates)
+                                 (setq helm-lsp-symbols-request-id nil)
+                                 (and helm-alive-p
+                                      (let ((helm-lsp-symbols-result-p t))
+                                        (setq helm-lsp-symbols-result candidates)
+                                        (helm-update))))
+                               :mode 'detached
+                               :cancel-token :workspace-symbols)
+                              helm-lsp-symbols-result))))
+          :action 'helm-lsp-workspace-symbol-action
+          :volatile t
+          :fuzzy-match t
+          :match (-const t)
+          :keymap helm-map
+          :candidate-transformer
+          (lambda (candidates)
+            (-map
+             (-lambda ((candidate &as
+                                  &SymbolInformation :container-name? :name :kind :location (&Location :uri)))
+               (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
+                 (cons
+                  (if (and (featurep 'lsp-treemacs)
+                           helm-lsp-treemacs-icons)
+                      (concat
+                       (or (helm-lsp--get-icon kind)
+                           (helm-lsp--get-icon 'fallback))
+                       (if (s-blank? container-name?)
+                           name
+                         (concat name " " (propertize container-name? 'face 'helm-lsp-container-face)))
+                       (propertize " · " 'face 'success)
+                       (helm-lsp--extract-file-name uri))
+                    (concat (if (s-blank? container-name?)
+                                name
+                              (concat name " " (propertize container-name? 'face 'helm-lsp-container-face) " -" ))
+                            " "
+                            (propertize (concat "(" type ")") 'face 'font-lock-type-face)
+                            (propertize " · " 'face 'success)
+                            (helm-lsp--extract-file-name uri)))
+                  candidate)))
+             (-take helm-candidate-number-limit candidates)))
+          :candidate-number-limit nil
+          :requires-pattern 0)
          :input input))
     (user-error "No LSP workspace active")))
 
@@ -168,29 +165,30 @@ When called with prefix ARG the default selection will be symbol at point."
      ((and (eq (seq-length actions) 1) lsp-auto-execute-action)
       (lsp-execute-code-action (lsp-seq-first actions)))
      (t (helm :sources
-              (helm-build-sync-source "Code Actions"
-                :candidates actions
-                :candidate-transformer
-                (lambda (candidates)
-                  (-map
-                   (-lambda ((candidate &as
-                                        &CodeAction :title))
-                     (list title :data candidate))
-                   candidates))
-                :action '(("Execute code action" . (lambda(candidate)
-                                                     (lsp-execute-code-action (plist-get candidate :data)))))))))))
+              (helm-build-sync-source
+               "Code Actions"
+               :candidates actions
+               :candidate-transformer
+               (lambda (candidates)
+                 (-map
+                  (-lambda ((candidate &as
+                                       &CodeAction :title))
+                    (list title :data candidate))
+                  candidates))
+               :action '(("Execute code action" . (lambda(candidate)
+                                                    (lsp-execute-code-action (plist-get candidate :data)))))))))))
 
 ;; helm projects
 
 (with-eval-after-load 'helm-projectile
   (defvar helm-lsp-source-projects
-    (helm-build-sync-source "LSP projects"
-      :candidates (lambda ()
-                    (lsp-session-folders (lsp-session)))
-      :fuzzy-match helm-projectile-fuzzy-match
-      :keymap helm-projectile-projects-map
-      :mode-line helm-read-file-name-mode-line-string
-      :action 'helm-source-projectile-projects-actions)
+    (helm-build-sync-source
+     "LSP projects"
+     :candidates (lambda () (lsp-session-folders (lsp-session)))
+     :fuzzy-match helm-projectile-fuzzy-match
+     :keymap helm-projectile-projects-map
+     :mode-line helm-read-file-name-mode-line-string
+     :action 'helm-source-projectile-projects-actions)
     "Helm source for known LSP projects.")
 
   (defun helm-lsp-switch-project (&optional arg)
