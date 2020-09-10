@@ -41,6 +41,11 @@
   :group 'lsp-mode
   :tag "Language Server")
 
+(lsp-defun helm-lsp-workspace-symbol-action ((&SymbolInformation :location))
+  "Action for helm workspace symbol.
+CANDIDATE is the selected item in the helm menu."
+  (lsp-goto-location location))
+
 (defface helm-lsp-container-face
   '((t :height 0.8 :inherit shadow))
   "The face used for code lens overlays."
@@ -92,7 +97,7 @@
                                 :mode 'detached
                                 :cancel-token :workspace-symbols)
                                helm-lsp-symbols-result))))
-           :action #'lsp-goto-location
+           :action 'helm-lsp-workspace-symbol-action
            :volatile t
            :fuzzy-match t
            :match (-const t)
