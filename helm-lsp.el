@@ -107,7 +107,7 @@ CANDIDATE is the selected item in the helm menu."
              (-map
               (-lambda ((candidate &as
                                    &SymbolInformation :container-name? :name :kind :location (&Location :uri)))
-                (let ((type (or (alist-get kind lsp--symbol-kind) "Unknown")))
+                (let ((type (or (alist-get kind lsp-symbol-kinds) "Unknown")))
                   (cons
                    (if (and (featurep 'lsp-treemacs)
                             helm-lsp-treemacs-icons)
