@@ -164,29 +164,31 @@ When called with prefix ARG the default selection will be symbol at point."
       (lsp-execute-code-action (lsp-seq-first actions)))
      (t (helm :sources
               (helm-build-sync-source
-               "Code Actions"
-               :candidates actions
-               :candidate-transformer
-               (lambda (candidates)
-                 (-map
-                  (-lambda ((candidate &as
-                                       &CodeAction :title))
-                    (list title :data candidate))
-                  candidates))
-               :action '(("Execute code action" . (lambda(candidate)
-                                                    (lsp-execute-code-action (plist-get candidate :data)))))))))))
+                  "Code Actions"
+                :candidates actions
+                :candidate-transformer
+                (lambda (candidates)
+                  (-map
+                   (-lambda ((candidate &as
+                                        &CodeAction :title))
+                     (list title :data candidate))
+                   candidates))
+                :action '(("Execute code action" . (lambda(candidate)
+                                                     (lsp-execute-code-action (plist-get candidate :data)))))))))))
+
+
 
 ;; helm projects
 
 (with-eval-after-load 'helm-projectile
   (defvar helm-lsp-source-projects
     (helm-build-sync-source
-     "LSP projects"
-     :candidates (lambda () (lsp-session-folders (lsp-session)))
-     :fuzzy-match helm-projectile-fuzzy-match
-     :keymap helm-projectile-projects-map
-     :mode-line helm-read-file-name-mode-line-string
-     :action 'helm-source-projectile-projects-actions)
+        "LSP projects"
+      :candidates (lambda () (lsp-session-folders (lsp-session)))
+      :fuzzy-match helm-projectile-fuzzy-match
+      :keymap helm-projectile-projects-map
+      :mode-line helm-read-file-name-mode-line-string
+      :action 'helm-source-projectile-projects-actions)
     "Helm source for known LSP projects.")
 
   (defun helm-lsp-switch-project (&optional arg)
@@ -203,3 +205,111 @@ With a prefix ARG invalidates the cache first."
 
 (provide 'helm-lsp)
 ;;; helm-lsp.el ends here
+
+;; (helm-mm-split-pattern "@error *b message b")
+(defconst helm-lsp--diag-mapping
+  `((,lsp/diagnostic-severity-error . error)
+    (,lsp/diagnostic-severity-warning .  warning)
+    (,lsp/diagnostic-severity-information . info)
+    (,lsp/diagnostic-severity-hint . info)))
+
+(lsp-defun helm-lsp--diag-matched
+  (file (&Diagnostic :message
+                     :source? :severity?
+                     :range (&Range :start
+                                    (&Position :line :character)))
+        tokens)
+  (-all? (lambda (token)
+
+           (cl-case (aref token 0)
+             (?# (s-matches? (substring token 1) file))
+             (?* (s-contains? (substring token 1)
+                              (symbol-name (alist-get severity? helm-lsp--diag-mapping))))
+             (t (s-contains? token message))))
+         tokens))
+
+(lsp-defun helm-lsp-jump-to-error ((file start))
+  "Go to selected symbol"
+  (find-file file)
+  (goto-char (lsp--position-to-point start)))
+
+(lsp-defun helm-lsp-quick-fix ((file start))
+  "Go to selected symbol and fix the action."
+  (find-file file)
+  (goto-char (lsp--position-to-point start))
+  (call-interactively #'lsp-execute-code-action))
+
+(defface helm-lsp-diag-error
+  '((t :inherit error))
+  "Face used for corresponding diag error level."
+  :group 'lsp-faces)
+
+(defface helm-lsp-diag-info
+  '((t :inherit success))
+  "Face used for corresponding diag error level."
+  :group 'lsp-faces)
+
+(defface helm-lsp-diag-warning
+  '((t :inherit warning))
+  "Face used for corresponding diag error level."
+  :group 'lsp-faces)
+
+(defcustom helm-lsp-diag-face-map
+  `((,lsp/diagnostic-severity-error . helm-lsp-diag-error)
+    (,lsp/diagnostic-severity-warning . helm-lsp-diag-warning)
+    (,lsp/diagnostic-severity-information . helm-lsp-diag-info)
+    (,lsp/diagnostic-severity-hint . helm-lsp-diag-info))
+  "Alist diagnostics to face."
+  :type 'alist)
+
+(defun helm-lsp-diagnostics ()
+  "Diagnostics using `helm'"
+  (interactive)
+  (helm
+   :sources
+   (helm-build-sync-source "Diagnostics"
+     :candidates (lambda ()
+                   (->> (lsp-diagnostics)
+                        (ht-map (lambda (file v)
+                                  (-map (-partial #'list
+                                                  file
+                                                  (if-let ((wks (lsp-workspace-root file)))
+                                                      (f-relative file wks)
+                                                    file))
+                                        v)))
+                        (apply #'append)))
+     :action '(("Goto diagnostic" . helm-lsp-jump-to-error)
+               ("Quick fix" . helm-lsp-quick-fix))
+     :persistent-action #'helm-lsp-jump-to-error
+     :match (-const t)
+     :volatile t
+     :candidate-transformer
+     (lambda (candidates)
+       (let ((tokens (helm-mm-split-pattern helm-pattern)))
+         (->> candidates
+              (-keep (-lambda ((full-path file (diag &as &Diagnostic :message
+                                                     :source? :severity?
+                                                     :range (&Range :start (start &as &Position :line :character)) )))
+                       (when (helm-lsp--diag-matched full-path diag tokens)
+                         (list (format
+                                "%s%s %s %s %s%s"
+                                (if (fboundp 'lsp-treemacs-get-icon)
+                                    (lsp-treemacs-get-icon (alist-get severity?
+                                                                      helm-lsp--diag-mapping))
+                                  (propertize
+                                   (format "[%s] " (alist-get severity? helm-lsp--diag-mapping))
+                                   'face
+                                   (alist-get severity? helm-lsp-diag-face-map)))
+                                (propertize (format "[%s]" source?) 'face 'lsp-details-face)
+                                source? message
+                                (propertize file 'face 'lsp-details-face)
+                                (propertize (format ":%s:%s" line character) 'face 'lsp-details-face))
+                               full-path start))))
+              (-sort (-lambda ((full-path-1 _ (&Diagnostic :range
+                                                           (&Range :start (&Position :line l1 :character c1))))
+                               (full-path-2 _ (&Diagnostic :range
+                                                           (&Range :start (&Position :line l2 :character c2)))))
+                       (if (string= full-path-1 full-path-2)
+                           (if (= l1 l2) (< c1 c2) (< l1 l2))
+                         (string< full-path-1 full-path-2))))))))
+   :candidate-number-limit nil))

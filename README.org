@@ -15,6 +15,9 @@ which provides as you type completion.
   - ~helm-lsp-global-workspace-symbol~ - workspace symbols from all of the active workspaces.
   - ~helm-lsp-code-actions~ - helm interface to lsp-execute-code-action.
   - ~helm-lsp-switch-project~ - switch ~lsp-mode~ project (when ~helm-projectile~ is present)
+  - ~helm-lsp-diagnostics~ - browse the errors in the project. Sample query:
+    ~*err #Test.js Foo Bar~ will return all of the errors which message contains
+    ~Foo~ and ~Bar~, it is in file ~Test.js~ and its severity is ~error~
 * Configuration
   Use the following lines to replace ~xref-find-apropos~ in ~lsp-mode~ controlled buffer.s
   #+BEGIN_SRC emacs-lisp
