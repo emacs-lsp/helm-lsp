@@ -296,8 +296,8 @@ With a prefix ARG invalidates the cache first."
   (interactive "P")
   (if (get-buffer "*helm-lsp-diagnostics*")
       (progn
-        (helm-resume "*helm-lsp-diagnostics*")
-        (helm-update))
+        (run-with-timer 0 nil #'helm-update)
+        (helm-resume "*helm-lsp-diagnostics*"))
     (helm
      :sources
      (helm-build-sync-source "Diagnostics"
