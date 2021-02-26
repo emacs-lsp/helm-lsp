@@ -294,10 +294,10 @@ With a prefix ARG invalidates the cache first."
 (defun helm-lsp-diagnostics (arg)
   "Diagnostics using `helm'"
   (interactive "P")
-  (if-let (get-buffer "*helm-lsp-diagnostics*")
+  (if (get-buffer "*helm-lsp-diagnostics*")
       (progn
         (helm-resume "*helm-lsp-diagnostics*")
-        (helm-update nil t))
+        (helm-update))
     (helm
      :sources
      (helm-build-sync-source "Diagnostics"
