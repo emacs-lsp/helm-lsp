@@ -201,12 +201,9 @@ With a prefix ARG invalidates the cache first."
             :buffer (concat "*helm projectile: " (projectile-project-name) "*")
             :truncate-lines helm-projectile-truncate-lines
             :prompt (projectile-prepend-project-name "Switch to LSP project: ")))))
-
 
-(provide 'helm-lsp)
-;;; helm-lsp.el ends here
+;; helm diagnostics
 
-;; (helm-mm-split-pattern "@error *b message b")
 (defconst helm-lsp--diag-mapping
   `((,lsp/diagnostic-severity-error . error)
     (,lsp/diagnostic-severity-warning .  warning)
@@ -262,12 +259,14 @@ With a prefix ARG invalidates the cache first."
   "Alist diagnostics to face."
   :type 'alist)
 
+;;;###autoload
 (defun helm-lsp-diagnostics ()
   "Diagnostics using `helm'"
   (interactive)
   (helm
    :sources
    (helm-build-sync-source "Diagnostics"
+     :mode-line (list "Diagnostics(s)")
      :candidates (lambda ()
                    (->> (lsp-diagnostics)
                         (ht-map (lambda (file v)
@@ -313,3 +312,7 @@ With a prefix ARG invalidates the cache first."
                            (if (= l1 l2) (< c1 c2) (< l1 l2))
                          (string< full-path-1 full-path-2))))))))
    :candidate-number-limit nil))
+
+
+(provide 'helm-lsp)
+;;; helm-lsp.el ends here
