@@ -282,11 +282,14 @@ With a prefix ARG invalidates the cache first."
                        (propertize (format ":%s:%s" line character) 'face 'lsp-details-face))
                       full-path start))))
      (-sort (-lambda ((full-path-1 _ (&Diagnostic :range
-                                                  (&Range :start (&Position :line l1 :character c1))))
+                                                  (&Range? :start (&Position? :line l1 :character c1))))
                       (full-path-2 _ (&Diagnostic :range
-                                                  (&Range :start (&Position :line l2 :character c2)))))
+                                                  (&Range? :start (&Position? :line l2 :character c2)))))
               (if (string= full-path-1 full-path-2)
-                  (if (= l1 l2) (< c1 c2) (< l1 l2))
+                  (cond
+                   ((not l1) t)
+                   ((not l2) nil)
+                   (t (if (eq l1 l2) (< c1 c2) (< l1 l2))))
                 (string< full-path-1 full-path-2)))))))
 
 
