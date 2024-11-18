@@ -1,5 +1,5 @@
 (package "helm-lsp"
-         "0.2"
+         "0.3"
          "LSP helm integration")
 
 (website-url "https://github.com/emacs-lsp/helm-lsp")
