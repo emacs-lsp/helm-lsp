@@ -1,5 +1,6 @@
 [[https://melpa.org/#/helm-lsp][file:https://melpa.org/packages/helm-lsp-badge.svg]]
 [[https://stable.melpa.org/#/helm-lsp][file:https://stable.melpa.org/packages/helm-lsp-badge.svg]]
+[[https://github.com/emacs-lsp/helm-lsp/actions/workflows/test.yml][file:https://github.com/emacs-lsp/helm-lsp/actions/workflows/test.yml/badge.svg]]
 
 #+TITLE: Helm lsp integration
 
