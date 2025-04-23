@@ -1,3 +1,5 @@
+;; -*- mode: eask; lexical-binding: t -*-
+
 (package "helm-lsp"
          "0.3"
          "LSP helm integration")
