@@ -19,7 +19,7 @@
 ;; Author: Ivan Yonchovski <yyoncho@gmail.com>
 ;; Keywords: languages, debug
 ;; URL: https://github.com/emacs-lsp/helm-lsp
-;; Package-Requires: ((emacs "27.1") (dash "2.14.1") (lsp-mode "5.0") (helm "2.0"))
+;; Package-Requires: ((emacs "28.1") (dash "2.14.1") (lsp-mode "5.0") (helm "2.0"))
 ;; Version: 0.3
 
 ;;; Commentary:
