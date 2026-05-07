@@ -1,7 +1,7 @@
 ;;; helm-lsp.el --- LSP helm integration             -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2018  Ivan Yonchovski
-;; Copyright (C) 2024  emacs-lsp maintainers
+;; Copyright (C) 2024-2026  emacs-lsp maintainers
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 ;; Author: Ivan Yonchovski <yyoncho@gmail.com>
 ;; Keywords: languages, debug
 ;; URL: https://github.com/emacs-lsp/helm-lsp
-;; Package-Requires: ((emacs "28.1") (dash "2.14.1") (lsp-mode "5.0") (helm "2.0"))
+;; Package-Requires: ((emacs "29.1") (dash "2.14.1") (lsp-mode "5.0") (helm "2.0"))
 ;; Version: 0.3
 
 ;;; Commentary:
